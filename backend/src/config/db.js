@@ -8,10 +8,8 @@ const connectDB = async () => {
 
   try {
     await mongoose.connect(process.env.MONGO_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-      tls: true,               // pastikan TLS dipaksa
-      tlsAllowInvalidCertificates: false, // bisa di-true buat testing, tapi false untuk production
+      tls: true,               // pastikan TLS dipaksa, optional di Atlas
+      tlsAllowInvalidCertificates: false, // bisa true buat testing lokal
     });
     console.log('MongoDB Atlas connected');
   } catch (error) {
