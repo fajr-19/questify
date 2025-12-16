@@ -5,7 +5,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 
 class ApiService {
   // Emulator: 10.0.2.2 | Real device: IP laptop
-  static const baseUrl = 'https://questify-backend.up.railway.app/';
+  static const baseUrl = 'https://questify-backend.up.railway.app';
 
   // ================= LOGIN =================
   static Future<void> login(String email, String password) async {
