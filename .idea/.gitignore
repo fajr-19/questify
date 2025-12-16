@@ -1,0 +1,8 @@
+# Default ignored files
+/shelf/
+/workspace.xml
+/node_module
+# env
+.env
+backend/.env
+frontend/.env
