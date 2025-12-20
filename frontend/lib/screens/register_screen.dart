@@ -102,7 +102,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
         MaterialPageRoute(builder: (_) => OtpScreen(email: emailC.text.trim())),
       );
     } catch (e) {
-      _snack(e.toString());
+      final msg = e.toString().replaceAll('Exception:', '').trim();
+      _snack(msg);
     } finally {
       setState(() => loading = false);
     }
