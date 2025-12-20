@@ -22,46 +22,66 @@ class LandingScreen extends StatelessWidget {
           ),
 
           // Dark overlay
-          Container(color: Colors.black.withOpacity(0.28)),
+          Container(color: Colors.black.withOpacity(0.45)),
 
           SafeArea(
             child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: w * 0.06),
+              padding: EdgeInsets.symmetric(horizontal: w * 0.08),
               child: Column(
                 children: [
-                  SizedBox(height: h * 0.12),
+                  SizedBox(height: h * 0.14),
 
-                  // Title
-                  Text(
+                  // Logo
+                  Image.asset('assets/icons/logo.png', width: w * 0.28),
+
+                  const SizedBox(height: 18),
+
+                  // App name
+                  const Text(
                     'Questify',
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: w * 0.11,
+                      fontSize: 42,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
 
+                  const SizedBox(height: 10),
+
+                  // Tagline
+                  const Text(
+                    'Level up your productivity\none quest at a time',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.white70, fontSize: 16),
+                  ),
+
                   const Spacer(),
 
-                  // Google button
+                  // GOOGLE LOGIN BUTTON
                   SizedBox(
                     width: double.infinity,
                     height: h * 0.065,
                     child: ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
-                        foregroundColor: Colors.black87,
+                        foregroundColor: Colors.black,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(16),
                         ),
                       ),
                       icon: Image.asset(
                         'assets/icons/google.png',
                         height: h * 0.028,
                       ),
-                      label: const Text('Continue with Google'),
+                      label: const Text(
+                        'Continue with Google',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                       onPressed: () {
-                        Navigator.push(
+                        Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(
                             builder: (_) => const LoginScreen(),
@@ -71,54 +91,22 @@ class LandingScreen extends StatelessWidget {
                     ),
                   ),
 
-                  SizedBox(height: h * 0.03),
+                  const SizedBox(height: 18),
 
-                  // Phone & Email buttons
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _smallButton(Icons.phone, 'Phone', h),
-                      SizedBox(width: w * 0.08),
-                      _smallButton(Icons.email, 'Email', h),
-                    ],
-                  ),
-
-                  SizedBox(height: h * 0.03),
-
-                  // Terms text
-                  Text(
-                    'I agree to the Terms of Service\nQuestify User Terms and Privacy Policy',
+                  // Terms
+                  const Text(
+                    'By continuing, you agree to our\nTerms of Service & Privacy Policy',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: h * 0.014,
-                    ),
+                    style: TextStyle(color: Colors.white54, fontSize: 12),
                   ),
 
-                  SizedBox(height: h * 0.04),
+                  SizedBox(height: h * 0.05),
                 ],
               ),
             ),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _smallButton(IconData icon, String label, double h) {
-    return Column(
-      children: [
-        Container(
-          padding: EdgeInsets.all(h * 0.015),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            shape: BoxShape.circle,
-          ),
-          child: Icon(icon, color: Colors.black, size: h * 0.028),
-        ),
-        SizedBox(height: h * 0.008),
-        Text(label, style: const TextStyle(color: Colors.white)),
-      ],
     );
   }
 }
