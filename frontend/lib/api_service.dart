@@ -4,7 +4,6 @@ import 'storage_service.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 class ApiService {
-  // Railway backend
   static const String baseUrl = 'https://questify-backend.up.railway.app';
 
   // ================= LOGIN =================
@@ -19,13 +18,15 @@ class ApiService {
       final data = jsonDecode(res.body);
       await StorageService.saveToken(data['token']);
     } else {
-      final msg = jsonDecode(res.body)['message'];
+      String msg = 'Login failed';
+      try {
+        msg = jsonDecode(res.body)['message'];
+      } catch (_) {}
       throw Exception(msg);
     }
   }
 
   // ================= REGISTER =================
-  // ⛔ TIDAK simpan token, karena harus OTP dulu
   static Future<void> register(
     String name,
     String email,
@@ -38,7 +39,10 @@ class ApiService {
     );
 
     if (res.statusCode != 201) {
-      final msg = jsonDecode(res.body)['message'];
+      String msg = 'Register failed';
+      try {
+        msg = jsonDecode(res.body)['message'];
+      } catch (_) {}
       throw Exception(msg);
     }
   }
@@ -52,7 +56,10 @@ class ApiService {
     );
 
     if (res.statusCode != 200) {
-      final msg = jsonDecode(res.body)['message'];
+      String msg = 'OTP verification failed';
+      try {
+        msg = jsonDecode(res.body)['message'];
+      } catch (_) {}
       throw Exception(msg);
     }
   }
@@ -67,7 +74,6 @@ class ApiService {
 
       final googleAuth = await googleUser.authentication;
       final idToken = googleAuth.idToken;
-
       if (idToken == null) return false;
 
       final res = await http.post(

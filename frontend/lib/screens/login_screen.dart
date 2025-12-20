@@ -38,6 +38,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 TextField(
                   controller: emailC,
+                  keyboardType: TextInputType.emailAddress,
                   decoration: InputDecoration(
                     labelText: 'Email',
                     border: OutlineInputBorder(
@@ -61,7 +62,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 const SizedBox(height: 18),
 
-                // LOGIN BUTTON
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
@@ -74,22 +74,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 const SizedBox(height: 12),
 
-                // GOOGLE LOGIN
                 ElevatedButton.icon(
-                  onPressed: () async {
-                    setState(() => loading = true);
-                    final ok = await ApiService.loginWithGoogle();
-                    setState(() => loading = false);
-
-                    if (ok && mounted) {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(builder: (_) => const HomeScreen()),
-                      );
-                    } else {
-                      _snack('Google login failed');
-                    }
-                  },
+                  onPressed: loading ? null : _handleGoogleLogin,
                   icon: Image.asset('assets/icons/google.png', height: 20),
                   label: const Text('Continue with Google'),
                   style: ElevatedButton.styleFrom(
@@ -117,7 +103,6 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  // ================= LOGIN HANDLER =================
   Future<void> _handleLogin() async {
     setState(() => loading = true);
     try {
@@ -131,8 +116,7 @@ class _LoginScreenState extends State<LoginScreen> {
     } catch (e) {
       final msg = e.toString().replaceAll('Exception:', '').trim();
 
-      // 👉 AUTO ARAHKAN KE OTP JIKA BELUM VERIFIED
-      if (msg.contains('not verified')) {
+      if (msg.toLowerCase().contains('verify')) {
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -144,6 +128,21 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     } finally {
       setState(() => loading = false);
+    }
+  }
+
+  Future<void> _handleGoogleLogin() async {
+    setState(() => loading = true);
+    final ok = await ApiService.loginWithGoogle();
+    setState(() => loading = false);
+
+    if (ok && mounted) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const HomeScreen()),
+      );
+    } else {
+      _snack('Google login failed');
     }
   }
 
