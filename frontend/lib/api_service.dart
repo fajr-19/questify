@@ -4,7 +4,7 @@ import 'storage_service.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 class ApiService {
-  // Emulator: 10.0.2.2 | Real device: IP laptop
+  // Railway backend
   static const String baseUrl = 'https://questify-backend.up.railway.app';
 
   // ================= LOGIN =================
@@ -19,11 +19,13 @@ class ApiService {
       final data = jsonDecode(res.body);
       await StorageService.saveToken(data['token']);
     } else {
-      throw Exception(res.body);
+      final msg = jsonDecode(res.body)['message'];
+      throw Exception(msg);
     }
   }
 
   // ================= REGISTER =================
+  // ⛔ TIDAK simpan token, karena harus OTP dulu
   static Future<void> register(
     String name,
     String email,
@@ -35,21 +37,24 @@ class ApiService {
       body: jsonEncode({'name': name, 'email': email, 'password': password}),
     );
 
-    if (res.statusCode == 201) {
-      final data = jsonDecode(res.body);
-      await StorageService.saveToken(data['token']);
-    } else {
-      throw Exception(res.body);
+    if (res.statusCode != 201) {
+      final msg = jsonDecode(res.body)['message'];
+      throw Exception(msg);
     }
   }
 
+  // ================= VERIFY OTP =================
   static Future<void> verifyOtp(String email, String otp) async {
     final res = await http.post(
       Uri.parse('$baseUrl/auth/verify-otp'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'email': email, 'otp': otp}),
     );
-    if (res.statusCode != 200) throw Exception(res.body);
+
+    if (res.statusCode != 200) {
+      final msg = jsonDecode(res.body)['message'];
+      throw Exception(msg);
+    }
   }
 
   // ================= GOOGLE LOGIN =================
@@ -61,10 +66,9 @@ class ApiService {
       if (googleUser == null) return false;
 
       final googleAuth = await googleUser.authentication;
-      print('ACCESS TOKEN: ${googleAuth.accessToken}');
-      print('ID TOKEN: ${googleAuth.idToken}');
-
       final idToken = googleAuth.idToken;
+
+      if (idToken == null) return false;
 
       final res = await http.post(
         Uri.parse('$baseUrl/auth/google'),
@@ -78,7 +82,7 @@ class ApiService {
         return true;
       }
       return false;
-    } catch (e) {
+    } catch (_) {
       return false;
     }
   }
