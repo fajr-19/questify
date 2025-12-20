@@ -3,8 +3,7 @@ const User = require('../models/user');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { OAuth2Client } = require('google-auth-library');
-const { sendOTPEmail } = "../utils/emailService.js";
-
+const { sendOTPEmail } = require('../utils/emailService');
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_WEB_CLIENT_ID);
 
@@ -25,10 +24,10 @@ exports.register = async (req, res) => {
     const hashed = await bcrypt.hash(password, 10);
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-    // 🔴 PENTING: KIRIM EMAIL DULU
-    await sendOTP(email, otp);
+    // ✅ KIRIM OTP EMAIL
+    await sendOTPEmail(email, otp);
 
-    // 🟢 BARU SIMPAN USER JIKA EMAIL SUKSES
+    // ✅ SIMPAN USER SETELAH EMAIL BERHASIL
     await User.create({
       name,
       email,
@@ -40,11 +39,10 @@ exports.register = async (req, res) => {
 
     res.status(201).json({ message: 'OTP sent to email' });
   } catch (err) {
-    console.error('EMAIL ERROR:', err.message);
+    console.error('EMAIL ERROR:', err);
     res.status(500).json({ message: 'Failed to send OTP email' });
   }
 };
-
 
 // ================= VERIFY OTP =================
 exports.verifyOtp = async (req, res) => {
