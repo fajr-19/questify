@@ -6,7 +6,11 @@ import 'package:google_sign_in/google_sign_in.dart';
 class ApiService {
   static const String baseUrl = 'https://questify-backend.up.railway.app';
 
-  static final GoogleSignIn _googleSignIn = GoogleSignIn(scopes: ['email']);
+  static final GoogleSignIn _googleSignIn = GoogleSignIn(
+    scopes: ['email'],
+    serverClientId:
+        '699171401038-tfit4h97i9sfs4vismq2rnrcabpla6l2.apps.googleusercontent.com',
+  );
 
   // ================= GOOGLE LOGIN ONLY =================
   static Future<bool> loginWithGoogle() async {
