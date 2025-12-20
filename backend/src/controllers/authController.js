@@ -3,7 +3,8 @@ const User = require('../models/user');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { OAuth2Client } = require('google-auth-library');
-const { sendOTP } = require('../utils/emailService');
+const { sendOTPEmail } = "../utils/emailService.js";
+
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_WEB_CLIENT_ID);
 
