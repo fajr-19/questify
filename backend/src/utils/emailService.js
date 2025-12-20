@@ -1,31 +1,22 @@
-const Brevo = require('@getbrevo/brevo');
+import { Resend } from "resend";
 
-const apiInstance = new Brevo.TransactionalEmailsApi();
+const resend = new Resend(process.env.RESEND_API_KEY);
 
-apiInstance.setApiKey(
-  Brevo.TransactionalEmailsApiApiKeys.apiKey,
-  process.env.EMAIL_API_KEY
-);
+export async function sendOTPEmail(email, otp) {
+  console.log(
+    "RESEND_API_KEY:",
+    process.env.RESEND_API_KEY ? "ADA" : "HILANG"
+  );
 
-exports.sendOTP = async (toEmail, otp) => {
-  const sendSmtpEmail = {
-    sender: {
-      email: process.env.EMAIL_FROM,
-      name: process.env.EMAIL_FROM_NAME,
-    },
-    to: [
-      {
-        email: toEmail,
-      },
-    ],
-    subject: 'Kode Verifikasi Questify',
-    htmlContent: `
-      <h2>Verifikasi Akun Questify</h2>
-      <p>Kode OTP kamu:</p>
+  await resend.emails.send({
+    from: process.env.EMAIL_FROM,
+    to: email,
+    subject: "Kode OTP Questify",
+    html: `
+      <h2>Kode OTP Kamu</h2>
+      <p>Gunakan kode berikut untuk verifikasi akun:</p>
       <h1>${otp}</h1>
-      <p>Kode berlaku selama <b>5 menit</b>.</p>
+      <p>Kode berlaku 5 menit</p>
     `,
-  };
-
-  await apiInstance.sendTransacEmail(sendSmtpEmail);
-};
+  });
+}
