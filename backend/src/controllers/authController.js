@@ -12,16 +12,22 @@ exports.register = async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
-    if (!name || !email || !password)
+    if (!name || !email || !password) {
       return res.status(400).json({ message: 'All fields required' });
+    }
 
     const exist = await User.findOne({ email });
-    if (exist)
+    if (exist) {
       return res.status(400).json({ message: 'Email already registered' });
+    }
 
     const hashed = await bcrypt.hash(password, 10);
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
+    // 🔴 PENTING: KIRIM EMAIL DULU
+    await sendOTP(email, otp);
+
+    // 🟢 BARU SIMPAN USER JIKA EMAIL SUKSES
     await User.create({
       name,
       email,
@@ -31,21 +37,13 @@ exports.register = async (req, res) => {
       isVerified: false,
     });
 
-    // ⛑️ EMAIL DILINDUNGI TRY-CATCH
-    try {
-      await sendOTP(email, otp);
-    } catch (mailErr) {
-      console.error('EMAIL ERROR:', mailErr.message);
-      return res
-        .status(500)
-        .json({ message: 'Failed to send OTP email' });
-    }
-
     res.status(201).json({ message: 'OTP sent to email' });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('EMAIL ERROR:', err.message);
+    res.status(500).json({ message: 'Failed to send OTP email' });
   }
 };
+
 
 // ================= VERIFY OTP =================
 exports.verifyOtp = async (req, res) => {
