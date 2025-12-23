@@ -29,30 +29,16 @@ class LandingScreen extends StatelessWidget {
               padding: EdgeInsets.symmetric(horizontal: w * 0.08),
               child: Column(
                 children: [
-                  SizedBox(height: h * 0.14),
+                  SizedBox(height: h * 0.18),
 
-                  // Logo
-                  Image.asset('assets/icons/logo.png', width: w * 0.28),
-
-                  const SizedBox(height: 18),
-
-                  // App name
+                  // APP NAME 
                   const Text(
                     'Questify',
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 42,
+                      fontSize: 44,
                       fontWeight: FontWeight.bold,
                     ),
-                  ),
-
-                  const SizedBox(height: 10),
-
-                  // Tagline
-                  const Text(
-                    'Level up your productivity\none quest at a time',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.white70, fontSize: 16),
                   ),
 
                   const Spacer(),
@@ -81,7 +67,7 @@ class LandingScreen extends StatelessWidget {
                         ),
                       ),
                       onPressed: () {
-                        Navigator.pushReplacement(
+                        Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (_) => const LoginScreen(),
