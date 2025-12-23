@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../widgets/greeting_section.dart';
-import '../widgets/filter_chips.dart';
-import '../widgets/hero_recommendation.dart';
-import '../widgets/horizontal_section.dart';
-import '../models/dummy_data.dart';
+import 'widgets/greeting_section.dart';
+import 'widgets/filter_chips.dart';
+import 'widgets/hero_banner.dart';
+import 'widgets/horizontal_list.dart';
+import 'models/dummy_data.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -12,8 +12,7 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       bottomNavigationBar: BottomNavigationBar(
-        selectedItemColor: Colors.deepPurple,
-        unselectedItemColor: Colors.grey,
+        currentIndex: 0,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
@@ -22,44 +21,27 @@ class HomeScreen extends StatelessWidget {
         ],
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.only(bottom: 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // TOP BAR
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                child: Row(
-                  children: [
-                    const CircleAvatar(radius: 18, backgroundImage: AssetImage('assets/avatar.png')),
-                    const Spacer(),
-                    IconButton(icon: const Icon(Icons.search), onPressed: () {}),
-                    IconButton(icon: const Icon(Icons.notifications_none), onPressed: () {}),
-                  ],
-                ),
-              ),
+        child: ListView(
+          children: [
+            GreetingSection(),
+            FilterChipsWidget(),
+            HeroBanner(),
 
-              const GreetingSection(),
-              const FilterChipsWidget(),
-              const HeroRecommendation(),
+            HorizontalList(
+              title: "Recommended for you",
+              items: DummyData.recommended,
+            ),
 
-              HorizontalSection(
-                title: "Based on your choice",
-                items: DummyData.recommended,
-              ),
+            HorizontalList(
+              title: "Popular Artists",
+              items: DummyData.popular,
+            ),
 
-              HorizontalSection(
-                title: "Popular today",
-                items: DummyData.popular,
-              ),
-
-              HorizontalSection(
-                title: "Trending podcasts",
-                items: DummyData.podcasts,
-              ),
-            ],
-          ),
+            HorizontalList(
+              title: "Trending Podcasts",
+              items: DummyData.podcasts,
+            ),
+          ],
         ),
       ),
     );
