@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../storage_service.dart';
 import 'login_screen.dart';
+import '../api_service.dart';
+import 'splash_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -32,7 +34,19 @@ class HomeScreen extends StatelessWidget {
       floatingActionButton: FloatingActionButton(onPressed: (){}, child: const Icon(Icons.add)),
       drawer: Drawer(child: Column(children: [
         const DrawerHeader(child: Text('Questify')),
-        ListTile(title: const Text('Logout'), onTap: () async { await StorageService.deleteToken(); Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginScreen())); }),
+        ListTile(
+  title: const Text('Logout'),
+  onTap: () async {
+    await ApiService.logout();
+    if (!context.mounted) return;
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const SplashScreen()),
+    );
+  },
+),
+
       ])),
     );
   }

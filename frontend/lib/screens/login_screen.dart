@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../api_service.dart';
 import 'home_screen.dart';
+import 'splash_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -56,22 +57,24 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _handleGoogleLogin() async {
-    setState(() => loading = true);
+  setState(() => loading = true);
 
-    final ok = await ApiService.loginWithGoogle();
+  final ok = await ApiService.loginWithGoogle();
 
-    if (!mounted) return;
-    setState(() => loading = false);
+  if (!mounted) return;
+  setState(() => loading = false);
 
-    if (ok) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
-      );
-    } else {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Google login failed')));
-    }
+  if (ok) {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const SplashScreen(toHome: true),
+      ),
+    );
+  } else {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Google login failed')),
+    );
   }
+}
 }
