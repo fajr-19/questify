@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 
 class FilterChipsWidget extends StatefulWidget {
-  const FilterChipsWidget({super.key});
+  final Function(String) onChanged;
+  const FilterChipsWidget({super.key, required this.onChanged});
 
   @override
   State<FilterChipsWidget> createState() => _FilterChipsWidgetState();
 }
 
 class _FilterChipsWidgetState extends State<FilterChipsWidget> {
-  int selectedIndex = 0;
-  final filters = ['All', 'Music', 'Podcast', 'Artist', 'Playlist'];
+  int selected = 0;
+  final filters = ['all', 'music', 'podcast', 'artist', 'playlist'];
 
   @override
   Widget build(BuildContext context) {
@@ -19,18 +20,16 @@ class _FilterChipsWidgetState extends State<FilterChipsWidget> {
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         itemCount: filters.length,
-        itemBuilder: (context, index) {
-          final selected = selectedIndex == index;
+        itemBuilder: (_, i) {
           return Padding(
             padding: const EdgeInsets.only(right: 8),
             child: ChoiceChip(
-              label: Text(filters[index]),
-              selected: selected,
+              label: Text(filters[i].toUpperCase()),
+              selected: selected == i,
               onSelected: (_) {
-                setState(() => selectedIndex = index);
+                setState(() => selected = i);
+                widget.onChanged(filters[i]);
               },
-              selectedColor: Colors.deepPurple,
-              labelStyle: TextStyle(color: selected ? Colors.white : Colors.black),
             ),
           );
         },
