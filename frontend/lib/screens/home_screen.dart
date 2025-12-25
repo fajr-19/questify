@@ -3,9 +3,8 @@ import 'widgets/greeting_section.dart';
 import 'widgets/filter_chips.dart';
 import 'widgets/hero_recommendation.dart';
 import 'widgets/horizontal_section.dart';
+import 'widgets/profile_side_panel.dart';
 import 'models/music_item.dart';
-import '../api_service.dart';
-import 'profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -15,57 +14,77 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  String filter = 'all';
-  late Future<List<MusicItem>> future;
+  int navIndex = 0;
 
-  @override
-  void initState() {
-    super.initState();
-    future = ApiService.fetchHome(filter);
-  }
+  final List<MusicItem> dummyMusic = List.generate(
+  6,
+  (i) => MusicItem(
+    title: 'Track $i',
+    imageUrl: 'https://picsum.photos/200?random=$i',
+  ),
+);
 
-  void onFilter(String f) {
-    setState(() {
-      filter = f;
-      future = ApiService.fetchHome(filter);
-    });
+  void _openProfilePanel() {
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: "Profile",
+      barrierColor: Colors.black.withValues(alpha: 0.3),
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (_, __, ___) {
+        return const Align(
+          alignment: Alignment.centerRight,
+          child: SizedBox(width: 280, child: ProfileSidePanel()),
+        );
+      },
+      transitionBuilder: (_, animation, __, child) {
+        return SlideTransition(
+          position: Tween(
+            begin: const Offset(1, 0),
+            end: Offset.zero,
+          ).animate(animation),
+          child: child,
+        );
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 0,
+        currentIndex: navIndex,
+        onTap: (i) => setState(() => navIndex = i),
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+          BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.library_music),
+            label: 'Library',
+          ),
         ],
-        onTap: (i) {
-          if (i == 1) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const ProfileScreen()),
-            );
-          }
-        },
       ),
       body: SafeArea(
         child: ListView(
           children: [
-            const GreetingSection(),
-            FilterChipsWidget(onChanged: onFilter),
+            GreetingSection(onProfileTap: _openProfilePanel),
 
-            FutureBuilder(
-              future: future,
-              builder: (_, snap) {
-                if (!snap.hasData) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                return HorizontalSection(
-                  title: 'Recommended',
-                  items: snap.data!,
-                );
+            FilterChipsWidget(
+              onChanged: (value) {
+                // nanti buat filter genre / mood
               },
+            ),
+
+            const HeroRecommendation(),
+
+            HorizontalSection(
+              title: "Recommended for you",
+              items: dummyMusic,
+            ),
+
+            HorizontalSection(
+              title: "Popular Artists",
+              items: dummyMusic,
             ),
           ],
         ),
