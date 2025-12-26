@@ -1,3 +1,4 @@
+// D:\ProjectPPL\questify\backend\src\models\user.js
 const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
@@ -83,17 +84,18 @@ const userSchema = new mongoose.Schema({
   timestamps: true // Otomatis membuat createdAt dan updatedAt
 });
 
-// Middleware pre-save untuk logika Level Up otomatis (Opsional)
-userSchema.pre('save', function(next) {
-  // Contoh logika: Setiap 100 XP naik 1 level
+// ==========================================================
+// MIDDLEWARE: Logika Level Up Otomatis
+// FIX: Hapus parameter 'next' karena menggunakan async/await
+// ==========================================================
+userSchema.pre('save', async function() {
   const xpNeededPerLevel = 100;
   const calculatedLevel = Math.floor(this.xp / xpNeededPerLevel) + 1;
   
   if (calculatedLevel > this.level) {
     this.level = calculatedLevel;
-    // Bisa tambah bonus diamond otomatis di sini jika mau
   }
-  next();
+  // Di Mongoose 5.x ke atas, async function tidak perlu memanggil next()
 });
 
 module.exports = mongoose.model('User', userSchema);
