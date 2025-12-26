@@ -1,4 +1,3 @@
-// D:\ProjectPPL\questify\backend\src\controllers\authController.js
 const User = require('../models/user');
 const jwt = require('jsonwebtoken');
 const { OAuth2Client } = require('google-auth-library');
@@ -18,10 +17,8 @@ exports.loginWithGoogle = async (req, res) => {
     const { sub, email, name, picture } = ticket.getPayload();
 
     let user = await User.findOne({ googleId: sub });
-    let isNewUser = false;
-
+    
     if (!user) {
-      isNewUser = true; // User benar-benar baru buat akun
       user = await User.create({
         googleId: sub,
         email,
@@ -29,25 +26,25 @@ exports.loginWithGoogle = async (req, res) => {
         avatar: picture,
         onboardingCompleted: false
       });
-    } else if (!user.onboardingCompleted) {
-      isNewUser = true; // Akun ada tapi belum beresin onboarding
     }
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1d' });
+    // Buat token JWT
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
     res.json({
-      message: 'Login success',
+      success: true,
       token,
-      isNewUser, // Ini yang dibaca Flutter
+      isNewUser: !user.onboardingCompleted, // Jika onboarding belum kelar, dianggap user baru
       user: {
         id: user._id,
         name: user.name,
         email: user.email,
         avatar: user.avatar,
+        onboardingCompleted: user.onboardingCompleted
       },
     });
   } catch (err) {
-    console.error(err);
-    res.status(401).json({ message: 'Google login failed' });
+    console.error("Google Login Error:", err);
+    res.status(401).json({ success: false, message: 'Google login failed' });
   }
 };

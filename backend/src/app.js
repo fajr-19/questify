@@ -1,7 +1,6 @@
-// D:\ProjectPPL\questify\backend\src\app.js
 require('dotenv').config();
 const express = require('express');
-const cors = require('cors'); // Tambahan Wajib
+const cors = require('cors');
 const connectDB = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
 const User = require('./models/user');
@@ -9,36 +8,31 @@ const jwt = require('jsonwebtoken');
 
 const app = express();
 
-// ================= MIDDLEWARE =================
-app.use(cors()); // Tambahan Wajib: Agar Flutter tidak kena blokir
+// Middleware
+app.use(cors());
 app.use(express.json());
 
-// Middleware Autentikasi
+// Auth Middleware Internal
 const authMiddleware = (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
-    if (!authHeader) return res.status(401).json({ message: 'No token provided' });
-
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
     const token = authHeader.split(' ')[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = decoded;
     next();
   } catch (err) {
-    res.status(401).json({ message: 'Invalid or expired token' });
+    res.status(401).json({ message: 'Invalid token' });
   }
 };
 
-// ================= ROUTES =================
-app.get('/', (req, res) => {
-  res.json({ status: 'OK', message: 'Questify Backend is running 🚀' });
-});
-
+// Routes
+app.get('/', (req, res) => res.json({ message: 'Questify API Running 🚀' }));
 app.use('/auth', authRoutes);
 
-/**
- * ROUTE ONBOARDING
- * Logika diperbaiki: Onboarding dianggap selesai HANYA jika user sudah pilih artis.
- */
+// Onboarding Route
 app.post('/user/onboarding', authMiddleware, async (req, res) => {
   try {
     const { 
@@ -52,37 +46,31 @@ app.post('/user/onboarding', authMiddleware, async (req, res) => {
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    // 1. Update Profile (Tahap 1)
+    // Update data profile
     if (full_name) user.name = full_name;
     if (date_of_birth) user.dob = new Date(date_of_birth);
     if (gender) user.gender = gender;
     
-    // 2. Update Artists (Tahap 2)
+    // Update minat
     if (favorite_artists) user.favoriteArtists = favorite_artists;
     if (favorite_podcasts) user.favoritePodcasts = favorite_podcasts;
 
-    // KUNCI PERBAIKAN: Hanya tandai selesai jika artis sudah diisi
-    // Jadi saat isi nama (CreateAccountScreen), status masih false.
-    // Saat pilih artis (ChooseArtistScreen), status jadi true.
+    // Selesai jika minimal ada artis yang dipilih (Tahap akhir onboarding)
     if (favorite_artists && favorite_artists.length > 0) {
-       user.onboardingCompleted = true;
+      user.onboardingCompleted = true;
     }
 
     await user.save();
 
     res.json({ 
-      message: 'Data saved successfully', 
-      user: {
-        id: user._id,
-        name: user.name,
-        onboardingCompleted: user.onboardingCompleted
-      } 
+      success: true, 
+      message: 'Onboarding success',
+      user: { name: user.name, onboardingCompleted: user.onboardingCompleted }
     });
   } catch (err) {
-    console.error('Onboarding Error:', err);
-    res.status(500).json({ message: 'Failed to save onboarding data' });
+    console.error(err);
+    res.status(500).json({ success: false, message: 'Server error' });
   }
 });
 
-connectDB();
 module.exports = app;
