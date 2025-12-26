@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'screens/home_screen.dart';
+import 'screens/splash_screen.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const QuestifyApp());
 }
 
@@ -17,7 +18,7 @@ class QuestifyApp extends StatelessWidget {
         fontFamily: 'Poppins',
         scaffoldBackgroundColor: const Color(0xFFFDFDFD),
       ),
-      home: const HomeScreen(),
+      home: const SplashScreen(),
     );
   }
 }

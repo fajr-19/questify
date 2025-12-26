@@ -1,22 +1,22 @@
 class MusicItem {
   final String id;
   final String title;
-  final String imageUrl;
   final String artist;
+  final String image;
 
   MusicItem({
     required this.id,
     required this.title,
-    required this.imageUrl,
     required this.artist,
+    required this.image,
   });
 
   factory MusicItem.fromJson(Map<String, dynamic> json) {
     return MusicItem(
-      id: json['id'].toString(),
+      id: json['_id']?.toString() ?? '',
       title: json['title'] ?? '',
-      imageUrl: json['image_url'] ?? '',
       artist: json['artist'] ?? '',
+      image: json['image'] ?? 'https://picsum.photos/200', // fallback aman
     );
   }
 }

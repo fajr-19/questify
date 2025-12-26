@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../api_service.dart';
 import 'choose_podcast_screen.dart';
 
 class ChooseArtistScreen extends StatefulWidget {
@@ -15,56 +16,63 @@ class _ChooseArtistScreenState extends State<ChooseArtistScreen> {
     'Adele',
     'Drake',
     'Billie Eilish',
-    'Ed Sheeran'
+    'Ed Sheeran',
+    'NIKI',
+    'Tulus',
   ];
-
   final selected = <String>[];
+  bool isSaving = false;
+
+  Future<void> _handleNext() async {
+    setState(() => isSaving = true);
+    // KIRIM KE BACKEND: Agar ML punya data awal lagu apa yang harus disarankan
+    await ApiService.updateOnboardingData({'favorite_artists': selected});
+
+    if (!mounted) return;
+    setState(() => isSaving = false);
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const ChoosePodcastScreen()),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Choose at least 3 artists')),
+      appBar: AppBar(title: const Text('Pilih Minimal 3 Artis')),
       body: Column(
         children: [
           Expanded(
-            child: GridView.count(
-              crossAxisCount: 2,
+            child: GridView.builder(
               padding: const EdgeInsets.all(16),
-              children: artists.map((a) {
-                final isSelected = selected.contains(a);
-                return GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      isSelected ? selected.remove(a) : selected.add(a);
-                    });
-                  },
-                  child: Card(
-                    color: isSelected
-                        ? Colors.deepPurple.shade100
-                        : Colors.white,
-                    child: Center(child: Text(a)),
-                  ),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                childAspectRatio: 3 / 1,
+                crossAxisSpacing: 10,
+                mainAxisSpacing: 10,
+              ),
+              itemCount: artists.length,
+              itemBuilder: (context, i) {
+                final a = artists[i];
+                final isSel = selected.contains(a);
+                return FilterChip(
+                  label: Text(a),
+                  selected: isSel,
+                  onSelected: (v) =>
+                      setState(() => v ? selected.add(a) : selected.remove(a)),
                 );
-              }).toList(),
+              },
             ),
           ),
-
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(24),
             child: ElevatedButton(
-              onPressed: selected.length >= 3
-                  ? () {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const ChoosePodcastScreen(),
-                        ),
-                      );
-                    }
+              onPressed: (selected.length >= 3 && !isSaving)
+                  ? _handleNext
                   : null,
-              child: const Text('Next'),
+              child: Text(isSaving ? 'Menyimpan...' : 'Next'),
             ),
-          )
+          ),
         ],
       ),
     );
