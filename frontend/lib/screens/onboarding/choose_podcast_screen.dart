@@ -1,111 +1,121 @@
 import 'package:flutter/material.dart';
 import '../../api_service.dart';
-import 'start_screen.dart';
+import '../../utils/transitions.dart';
+import '../home_screen.dart';
 
 class ChoosePodcastScreen extends StatefulWidget {
-  const ChoosePodcastScreen({super.key});
+  final DateTime dob;
+  final String gender;
+  final String name;
+  final List<String> artists;
+
+  const ChoosePodcastScreen({
+    super.key,
+    required this.dob,
+    required this.gender,
+    required this.name,
+    required this.artists,
+  });
 
   @override
   State<ChoosePodcastScreen> createState() => _ChoosePodcastScreenState();
 }
 
 class _ChoosePodcastScreenState extends State<ChoosePodcastScreen> {
-  final podcasts = [
-    'Tech',
-    'Business',
-    'Health',
-    'Design',
-    'Education',
-    'Comedy',
-    'Music News',
-    'Self Improvement',
+  final List<String> podcasts = [
+    "Podkesmas",
+    "Agak Laen",
+    "Deddy Corbuzier",
+    "The Onsu",
   ];
-  final selected = <String>[];
-  bool isSaving = false;
+  final List<String> selectedPodcasts = [];
+  bool isLoading = false;
 
-  // Fungsi untuk menyimpan preferensi podcast
-  Future<void> _handleDone() async {
-    setState(() => isSaving = true);
+  Future<void> _finishOnboarding() async {
+    setState(() => isLoading = true);
 
-    // Kirim data podcast ke backend (bisa kosong jika user tidak pilih)
-    await ApiService.updateOnboardingData({'favorite_podcasts': selected});
+    // Data lengkap untuk dikirim ke backend
+    final data = {
+      "full_name": widget.name,
+      "date_of_birth": widget.dob.toIso8601String(),
+      "gender": widget.gender,
+      "favorite_artists": widget.artists,
+      "favorite_podcasts": selectedPodcasts,
+    };
 
-    if (!mounted) return;
-    setState(() => isSaving = false);
+    final success = await ApiService.updateOnboardingData(data);
 
-    // Pindah ke halaman Start/Success
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => const StartScreen()),
-    );
+    if (mounted) {
+      setState(() => isLoading = false);
+      if (success != null) {
+        Navigator.of(
+          context,
+        ).pushAndRemoveUntil(createRoute(const HomeScreen()), (route) => false);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Gagal menyimpan data, coba lagi.")),
+        );
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFF121212),
       appBar: AppBar(
-        title: const Text('Choose podcasts'),
         backgroundColor: Colors.transparent,
         elevation: 0,
-        foregroundColor: Colors.black,
+        bottom: onboardingStepProgress(1.0), // Progress 100%
+        title: const Text("Pilih Podcast", style: TextStyle(fontSize: 16)),
       ),
       body: Column(
         children: [
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-            child: Text(
-              "Dapatkan rekomendasi podcast berdasarkan minatmu (opsional).",
-              style: TextStyle(color: Colors.grey),
-            ),
-          ),
           Expanded(
             child: ListView.builder(
+              padding: const EdgeInsets.all(20),
               itemCount: podcasts.length,
               itemBuilder: (context, index) {
                 final p = podcasts[index];
-                final isSelected = selected.contains(p);
-                return ListTile(
-                  title: Text(
-                    p,
-                    style: TextStyle(
-                      fontWeight: isSelected
-                          ? FontWeight.bold
-                          : FontWeight.normal,
-                      color: isSelected ? Colors.deepPurple : Colors.black,
-                    ),
-                  ),
-                  trailing: isSelected
-                      ? const Icon(Icons.check_circle, color: Colors.deepPurple)
-                      : const Icon(Icons.add_circle_outline),
-                  onTap: () {
+                final isSelected = selectedPodcasts.contains(p);
+                return CheckboxListTile(
+                  title: Text(p, style: const TextStyle(color: Colors.white)),
+                  value: isSelected,
+                  activeColor: Colors.green,
+                  onChanged: (val) {
                     setState(() {
-                      isSelected ? selected.remove(p) : selected.add(p);
+                      val!
+                          ? selectedPodcasts.add(p)
+                          : selectedPodcasts.remove(p);
                     });
                   },
                 );
               },
             ),
           ),
-
           Padding(
-            padding: const EdgeInsets.all(24),
-            child: SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton(
-                onPressed: isSaving ? null : _handleDone,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor:
-                      Colors.black, // Berbeda warna agar terlihat kontras
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-                child: isSaving
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text('Done', style: TextStyle(fontSize: 16)),
+            padding: const EdgeInsets.only(bottom: 40),
+            child: ElevatedButton(
+              onPressed: isLoading ? null : _finishOnboarding,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: Colors.black,
+                minimumSize: const Size(200, 50),
+                shape: const StadiumBorder(),
               ),
+              child: isLoading
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        color: Colors.black,
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : const Text(
+                      "Mulai Mendengarkan",
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
             ),
           ),
         ],

@@ -1,45 +1,81 @@
 import 'package:flutter/material.dart';
-import 'create_account_screen.dart'; // Mengarah ke file pilihanmu
+import '../../utils/transitions.dart';
+import 'create_account_screen.dart';
 
 class OnboardingGenderScreen extends StatefulWidget {
   final DateTime dob;
   const OnboardingGenderScreen({super.key, required this.dob});
-
   @override
   State<OnboardingGenderScreen> createState() => _OnboardingGenderScreenState();
 }
 
 class _OnboardingGenderScreenState extends State<OnboardingGenderScreen> {
-  String? gender;
-
+  String? selectedGender;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Pilih Gender')),
-      body: Column(
-        children: [
-          ...['Male', 'Female', 'Other'].map(
-            (g) => RadioListTile<String>(
-              title: Text(g),
-              value: g,
-              groupValue: gender,
-              onChanged: (v) => setState(() => gender = v),
+      backgroundColor: const Color(0xFF121212),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        bottom: onboardingStepProgress(0.4),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              "Apa gendermu?",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-          ),
-          const Spacer(),
-          ElevatedButton(
-            onPressed: gender != null
-                ? () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) =>
-                          CreateAccountScreen(dob: widget.dob, gender: gender!),
+            const SizedBox(height: 30),
+            Wrap(
+              spacing: 12,
+              children: ["Pria", "Wanita", "Lainnya"]
+                  .map(
+                    (g) => ChoiceChip(
+                      label: Text(g),
+                      selected: selectedGender == g,
+                      onSelected: (_) => setState(() => selectedGender = g),
+                      selectedColor: Colors.green,
+                      backgroundColor: Colors.grey[900],
+                      labelStyle: TextStyle(
+                        color: selectedGender == g
+                            ? Colors.black
+                            : Colors.white,
+                      ),
                     ),
                   )
-                : null,
-            child: const Text('Next'),
-          ),
-        ],
+                  .toList(),
+            ),
+            const Spacer(),
+            Center(
+              child: ElevatedButton(
+                onPressed: selectedGender == null
+                    ? null
+                    : () => Navigator.of(context).push(
+                        createRoute(
+                          CreateAccountScreen(
+                            dob: widget.dob,
+                            gender: selectedGender!,
+                          ),
+                        ),
+                      ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: Colors.black,
+                  shape: const StadiumBorder(),
+                  minimumSize: const Size(150, 50),
+                ),
+                child: const Text("Next"),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
