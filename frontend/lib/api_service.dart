@@ -1,4 +1,6 @@
+// D:\ProjectPPL\questify\frontend\lib\api_service.dart
 import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'storage_service.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -13,7 +15,7 @@ class ApiService {
         '699171401038-tfit4h97i9sfs4vismq2rnrcabpla6l2.apps.googleusercontent.com',
   );
 
-  // AUTH: Login dengan pengecekan User Baru
+  // AUTH: Login
   static Future<Map<String, dynamic>?> loginWithGoogle() async {
     try {
       final user = await googleSignIn.signIn();
@@ -29,36 +31,40 @@ class ApiService {
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
         await StorageService.saveToken(data['token']);
-        // Mengembalikan data lengkap (token & isNewUser)
         return data;
       }
+
+      debugPrint("Login Failed: ${res.statusCode} - ${res.body}");
       return null;
     } catch (e) {
-      print("Login Error: $e");
+      debugPrint("Login Error: $e");
       return null;
     }
   }
 
-  // ONBOARDING: Simpan data pilihan user (PENTING UNTUK ML)
+  // ONBOARDING: Menggunakan POST dan Endpoint yang benar
   static Future<bool> updateOnboardingData(Map<String, dynamic> payload) async {
     try {
       final token = await StorageService.getToken();
-      final res = await http.put(
-        // Gunakan PUT atau POST sesuai backend
-        Uri.parse('$baseUrl/user/update-profile'),
+
+      final res = await http.post(
+        Uri.parse('$baseUrl/user/onboarding'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
         },
         body: jsonEncode(payload),
       );
+
+      debugPrint("Onboarding Resp: ${res.statusCode}");
       return res.statusCode == 200;
     } catch (e) {
+      debugPrint("Update Onboarding Error: $e");
       return false;
     }
   }
 
-  // REKOMENDASI ML
+  // ML Recommendations
   static Future<List<MusicItem>> fetchMLRecommendations() async {
     try {
       final token = await StorageService.getToken();
