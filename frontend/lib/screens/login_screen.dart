@@ -22,46 +22,70 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (result != null) {
       bool isNewUser = result['isNewUser'] ?? false;
-      if (isNewUser) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const OnboardingDobScreen()),
-        );
-      } else {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const HomeScreen()),
-        );
-      }
+
+      // Jika user baru -> ke DOB, Jika user lama -> ke Home
+      Widget nextStep = isNewUser
+          ? const OnboardingDobScreen()
+          : const HomeScreen();
+
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => nextStep),
+        (route) => false,
+      );
     } else {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Login gagal')));
+      ).showSnackBar(const SnackBar(content: Text('Login Gagal')));
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
+      body: Container(
+        width: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFF1A1A1A), Colors.black],
+          ),
+        ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Text(
               'Questify',
               style: TextStyle(
-                fontSize: 36,
+                fontSize: 42,
                 fontWeight: FontWeight.bold,
-                color: Colors.deepPurple,
+                color: Colors.white,
               ),
             ),
-            const SizedBox(height: 40),
-            ElevatedButton.icon(
-              onPressed: loading ? null : _handleGoogleLogin,
-              icon: const Icon(Icons.login),
-              label: Text(loading ? 'Loading...' : 'Continue with Google'),
-              style: ElevatedButton.styleFrom(minimumSize: const Size(250, 50)),
+            const SizedBox(height: 10),
+            const Text(
+              'Confirm your account to continue',
+              style: TextStyle(color: Colors.white70),
             ),
+            const SizedBox(height: 60),
+            if (loading)
+              const CircularProgressIndicator(color: Colors.white)
+            else
+              ElevatedButton(
+                onPressed: _handleGoogleLogin,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.deepPurpleAccent,
+                  minimumSize: const Size(250, 55),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                ),
+                child: const Text(
+                  "Confirm & Login",
+                  style: TextStyle(color: Colors.white, fontSize: 16),
+                ),
+              ),
           ],
         ),
       ),

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../models/music_item.dart';
+import '../models/music_item.dart'; // Pastikan path import benar
 
 class HorizontalSection extends StatelessWidget {
   final String title;
@@ -23,67 +23,78 @@ class HorizontalSection extends StatelessWidget {
           child: Text(
             title,
             style: const TextStyle(
-              fontSize: 18,
+              fontSize: 20,
               fontWeight: FontWeight.bold,
-              color: Colors.black87,
+              color: Colors
+                  .white, // Menggunakan putih agar cocok dengan tema gelap
             ),
           ),
         ),
         SizedBox(
-          height: 200, // Tinggi ditambah sedikit agar teks tidak mepet
+          height: 220, // Tinggi ditambah agar tidak terpotong
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             itemCount: items.length,
             padding: const EdgeInsets.symmetric(horizontal: 8),
-            itemBuilder: (_, i) {
+            physics:
+                const BouncingScrollPhysics(), // Efek scroll yang lebih smooth
+            itemBuilder: (context, i) {
               final item = items[i];
               return GestureDetector(
-                onTap: () =>
-                    onTap(item), // Menjalankan fungsi _playMusic di HomeScreen
-                behavior: HitTestBehavior
-                    .opaque, // Agar area kosong di sekitar teks juga bisa di-klik
+                onTap: () => onTap(item),
+                behavior: HitTestBehavior.opaque,
                 child: Container(
-                  width: 140,
+                  width: 150,
                   margin: const EdgeInsets.symmetric(horizontal: 8),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // COVER ALBUM
                       ClipRRect(
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(12),
                         child: Image.network(
-                          item.imageUrl,
-                          height: 130,
-                          width: 140,
+                          item.coverUrl ??
+                              'https://via.placeholder.com/150', // Perbaikan di sini
+                          height: 150,
+                          width: 150,
                           fit: BoxFit.cover,
                           errorBuilder: (_, __, ___) => Container(
-                            height: 130,
-                            color: Colors.grey[300],
+                            height: 150,
+                            width: 150,
+                            color: Colors.white10,
                             child: const Icon(
                               Icons.music_note,
-                              color: Colors.white,
+                              color: Colors.white54,
+                              size: 40,
                             ),
                           ),
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 10),
+
+                      // JUDUL LAGU
                       Text(
                         item.title,
                         maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 14,
+                          color: Colors.white,
                         ),
-                        overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 2),
+
+                      const SizedBox(height: 4),
+
+                      // NAMA ARTIS
                       Text(
                         item.artist,
-                        style: const TextStyle(
-                          color: Colors.black54,
-                          fontSize: 12,
-                        ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white60,
+                          fontSize: 12,
+                        ),
                       ),
                     ],
                   ),

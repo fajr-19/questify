@@ -7,31 +7,24 @@ class LandingScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    final h = size.height;
-    final w = size.width;
 
     return Scaffold(
       body: Stack(
         children: [
-          // Background image
           Positioned.fill(
             child: Image.asset(
               'assets/images/landing_bg.jpg',
               fit: BoxFit.cover,
+              errorBuilder: (context, e, s) => Container(color: Colors.black),
             ),
           ),
-
-          // Dark overlay
-          Container(color: Colors.black.withOpacity(0.45)),
-
+          Container(color: Colors.black.withOpacity(0.5)),
           SafeArea(
             child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: w * 0.08),
+              padding: const EdgeInsets.symmetric(horizontal: 30),
               child: Column(
                 children: [
-                  SizedBox(height: h * 0.18),
-
-                  // APP NAME
+                  SizedBox(height: size.height * 0.15),
                   const Text(
                     'Questify',
                     style: TextStyle(
@@ -40,13 +33,10 @@ class LandingScreen extends StatelessWidget {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-
                   const Spacer(),
-
-                  // GOOGLE LOGIN BUTTON
                   SizedBox(
                     width: double.infinity,
-                    height: h * 0.065,
+                    height: 55,
                     child: ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
@@ -57,14 +47,13 @@ class LandingScreen extends StatelessWidget {
                       ),
                       icon: Image.asset(
                         'assets/icons/google.png',
-                        height: h * 0.028,
+                        height: 24,
+                        errorBuilder: (context, e, s) =>
+                            const Icon(Icons.login),
                       ),
                       label: const Text(
                         'Continue with Google',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
+                        style: TextStyle(fontWeight: FontWeight.bold),
                       ),
                       onPressed: () {
                         Navigator.push(
@@ -76,17 +65,13 @@ class LandingScreen extends StatelessWidget {
                       },
                     ),
                   ),
-
-                  const SizedBox(height: 18),
-
-                  // Terms
+                  const SizedBox(height: 20),
                   const Text(
                     'By continuing, you agree to our\nTerms of Service & Privacy Policy',
                     textAlign: TextAlign.center,
                     style: TextStyle(color: Colors.white54, fontSize: 12),
                   ),
-
-                  SizedBox(height: h * 0.05),
+                  SizedBox(height: size.height * 0.05),
                 ],
               ),
             ),

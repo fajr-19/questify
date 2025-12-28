@@ -100,14 +100,19 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 
   void _playMusic(MusicItem item) {
-    // 1. Tambah XP (Gamifikasi)
     ApiService.addXP(10);
 
-    // 2. Navigasi ke Player
-    // PERBAIKAN: Parameter diganti menjadi 'item' sesuai konstruktor MusicPlayerScreen
+    // Ambil index lagu yang diklik dari daftar rekomendasi
+    int index = mlRecommendations.indexOf(item);
+
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => MusicPlayerScreen(item: item)),
+      MaterialPageRoute(
+        builder: (context) => MusicPlayerScreen(
+          playlist: mlRecommendations, // Kirim seluruh list
+          initialIndex: index, // Kirim index yang dipilih
+        ),
+      ),
     );
   }
 

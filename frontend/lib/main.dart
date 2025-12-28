@@ -1,15 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
-import 'screens/splash_screen.dart';
 import 'utils/colors.dart';
-import 'storage_service.dart';
-import 'screens/login_screen.dart'; // Pastikan path ini benar
-import 'screens/home_screen.dart'; // Pastikan path ini benar
+import 'screens/splash_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
   try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
@@ -18,7 +14,6 @@ void main() async {
   } catch (e) {
     debugPrint("❌ Firebase Gagal Terhubung: $e");
   }
-
   runApp(const QuestifyApp());
 }
 
@@ -41,7 +36,7 @@ class QuestifyApp extends StatelessWidget {
           centerTitle: true,
         ),
       ),
-      // Splash screen akan menangani navigasi internal berdasarkan auth status
+      // Splash Screen adalah titik masuk pertama
       home: const SplashScreen(),
     );
   }
