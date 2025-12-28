@@ -1,4 +1,4 @@
-require('dotenv').config({ path: '../../.env' }); // Pastikan path env benar
+require('dotenv').config();
 const mongoose = require('mongoose');
 const axios = require('axios');
 const Music = require('../models/music');
