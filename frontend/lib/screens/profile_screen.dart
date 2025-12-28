@@ -3,7 +3,10 @@ import '../api_service.dart';
 import 'landing_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({super.key});
+  final String name;
+  final String photo;
+
+  const ProfileScreen({super.key, required this.name, required this.photo});
 
   @override
   Widget build(BuildContext context) {
@@ -12,40 +15,37 @@ class ProfileScreen extends StatelessWidget {
       body: ListView(
         children: [
           const SizedBox(height: 24),
-
-          // USER HEADER
-          const ListTile(
+          ListTile(
             leading: CircleAvatar(
               radius: 26,
-              child: Icon(Icons.person, size: 28),
+              backgroundImage: NetworkImage(photo),
             ),
-            title: Text('Fajar', style: TextStyle(fontWeight: FontWeight.bold)),
-            subtitle: Text('Free Account'),
+            title: Text(
+              name,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            subtitle: const Text(
+              'Free Account',
+              style: TextStyle(color: Colors.grey),
+            ),
           ),
-
-          const Divider(),
-
-          // SETTINGS
+          const Divider(color: Colors.white12),
           ListTile(
-            leading: const Icon(Icons.settings),
-            title: const Text('Settings'),
+            leading: const Icon(Icons.settings, color: Colors.white),
+            title: const Text(
+              'Settings',
+              style: TextStyle(color: Colors.white),
+            ),
             onTap: () {},
           ),
-
-          // ADD ACCOUNT
-          ListTile(
-            leading: const Icon(Icons.switch_account),
-            title: const Text('Add another account'),
-            onTap: () {},
-          ),
-
-          // LOGOUT
           ListTile(
             leading: const Icon(Icons.logout, color: Colors.red),
             title: const Text('Logout', style: TextStyle(color: Colors.red)),
             onTap: () async {
               await ApiService.logout();
-
               if (!context.mounted) return;
               Navigator.pushAndRemoveUntil(
                 context,

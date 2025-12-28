@@ -31,7 +31,7 @@ class LandingScreen extends StatelessWidget {
                 children: [
                   SizedBox(height: h * 0.18),
 
-                  // APP NAME 
+                  // APP NAME
                   const Text(
                     'Questify',
                     style: TextStyle(

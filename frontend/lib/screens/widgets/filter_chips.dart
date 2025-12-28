@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../utils/colors.dart';
 
 class FilterChipsWidget extends StatefulWidget {
   final Function(String) onChanged;
@@ -10,23 +11,38 @@ class FilterChipsWidget extends StatefulWidget {
 
 class _FilterChipsWidgetState extends State<FilterChipsWidget> {
   int selected = 0;
-  final filters = ['all', 'music', 'podcast', 'artist', 'playlist'];
+  // List filter disesuaikan: All, Music, Podcast, Level UP
+  final filters = ['All', 'Music', 'Podcast', 'Level UP'];
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 42,
+      height: 40,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
         itemCount: filters.length,
         itemBuilder: (_, i) {
+          final isSelected = selected == i;
           return Padding(
-            padding: const EdgeInsets.only(right: 8),
+            padding: const EdgeInsets.only(right: 10),
             child: ChoiceChip(
-              label: Text(filters[i].toUpperCase()),
-              selected: selected == i,
-              onSelected: (_) {
+              label: Text(
+                filters[i],
+                style: TextStyle(
+                  color: isSelected ? Colors.white : Colors.white70,
+                  fontSize: 13,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                ),
+              ),
+              selected: isSelected,
+              selectedColor: QColors.primaryPurple,
+              backgroundColor: QColors.surface,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+                side: const BorderSide(color: Colors.transparent),
+              ),
+              showCheckmark: false,
+              onSelected: (bool selectedStatus) {
                 setState(() => selected = i);
                 widget.onChanged(filters[i]);
               },

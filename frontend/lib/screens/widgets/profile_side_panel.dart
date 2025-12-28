@@ -1,8 +1,20 @@
 import 'package:flutter/material.dart';
 import '../../api_service.dart';
+import '../profile_screen.dart';
 
 class ProfileSidePanel extends StatelessWidget {
-  const ProfileSidePanel({super.key});
+  final String displayName;
+  final String photoUrl;
+  final int xp; // Tambahkan ini
+  final int level; // Tambahkan ini
+
+  const ProfileSidePanel({
+    super.key,
+    required this.displayName,
+    required this.photoUrl,
+    required this.xp, // Tambahkan ini
+    required this.level, // Tambahkan ini
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -10,116 +22,109 @@ class ProfileSidePanel extends StatelessWidget {
       color: Colors.transparent,
       child: Container(
         decoration: const BoxDecoration(
-          color: Color(0xFF5D5755),
+          color: Color(0xFF1A1A1A),
           borderRadius: BorderRadius.only(
             topLeft: Radius.circular(30),
             bottomLeft: Radius.circular(30),
           ),
         ),
         child: SafeArea(
-          child: FutureBuilder<Map<String, dynamic>>(
-            future: ApiService.fetchProfile(),
-            builder: (context, snapshot) {
-              final profile = snapshot.data;
-              final String name = profile?['name'] ?? 'User';
+          child: Column(
+            children: [
+              const SizedBox(height: 30),
+              ListTile(
+                leading: CircleAvatar(
+                  radius: 28,
+                  backgroundColor: Colors.white10,
+                  backgroundImage: NetworkImage(photoUrl),
+                ),
+                title: Text(
+                  displayName,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
+                ),
+                // Menampilkan Level dan XP di bawah nama
+                subtitle: Text(
+                  "Level $level • $xp XP",
+                  style: const TextStyle(color: Colors.white70, fontSize: 13),
+                ),
+              ),
+              const SizedBox(height: 10),
+              const Divider(color: Colors.white12, indent: 20, endIndent: 20),
 
-              return Column(
-                children: [
-                  const SizedBox(height: 20),
-                  ListTile(
-                    leading: const CircleAvatar(
-                      radius: 25,
-                      backgroundColor: Colors.white30,
-                      child: Text(
-                        "S",
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 20,
-                        ),
-                      ),
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  children: [
+                    _item(
+                      Icons.person_outline,
+                      "Akun Saya",
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ProfileScreen(
+                              name: displayName,
+                              photo: photoUrl,
+                            ),
+                          ),
+                        );
+                      },
                     ),
-                    title: Text(
-                      name,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
-                      ),
+                    _item(Icons.directions_run, "Quest Baru"),
+                    _item(Icons.notifications_none_outlined, "Pengumuman"),
+                    _item(Icons.settings_outlined, "Pengaturan"),
+                    const Divider(
+                      color: Colors.white12,
+                      indent: 20,
+                      endIndent: 20,
                     ),
-                    subtitle: const Text(
-                      "View profile",
-                      style: TextStyle(color: Colors.white70),
+                    _item(
+                      Icons.logout_rounded,
+                      "Keluar",
+                      textColor: Colors.redAccent,
+                      onTap: () async {
+                        await ApiService.logout();
+                        if (context.mounted) {
+                          Navigator.pushNamedAndRemoveUntil(
+                            context,
+                            '/',
+                            (route) => false,
+                          );
+                        }
+                      },
                     ),
-                  ),
-                  const Divider(
-                    color: Colors.white24,
-                    indent: 15,
-                    endIndent: 15,
-                    thickness: 1,
-                  ),
-
-                  Expanded(
-                    child: ListView(
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      children: [
-                        _item(
-                          Icons.add,
-                          "Add Account",
-                          onTap: () => print("Add Account clicked"),
-                        ),
-                        _item(
-                          Icons.directions_run,
-                          "New Quest",
-                          onTap: () => print("New Quest clicked"),
-                        ),
-                        _item(
-                          Icons.announcement_outlined,
-                          "Announcement",
-                          onTap: () => print("Announcement clicked"),
-                        ),
-                        _item(
-                          Icons.settings_outlined,
-                          "Settings",
-                          onTap: () => print("Settings clicked"),
-                        ),
-                        _item(
-                          Icons.logout_rounded,
-                          "Log Out",
-                          onTap: () async {
-                            await ApiService.logout();
-                            if (context.mounted) {
-                              Navigator.popUntil(context, (r) => r.isFirst);
-                            }
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              );
-            },
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _item(IconData icon, String text, {VoidCallback? onTap}) {
+  Widget _item(
+    IconData icon,
+    String text, {
+    VoidCallback? onTap,
+    Color textColor = Colors.white,
+  }) {
     return ListTile(
-      leading: CircleAvatar(
-        radius: 18,
-        backgroundColor: Colors.white24,
-        child: Icon(icon, color: Colors.white, size: 20),
-      ),
+      // Menggunakan .withValues untuk menghindari warning deprecated
+      leading: Icon(icon, color: textColor.withValues(alpha: 0.8), size: 22),
       title: Text(
         text,
-        style: const TextStyle(
-          color: Colors.white,
+        style: TextStyle(
+          color: textColor,
           fontWeight: FontWeight.w500,
+          fontSize: 15,
         ),
       ),
-      onTap: onTap,
+      onTap: onTap ?? () {},
     );
   }
 }

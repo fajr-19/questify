@@ -51,7 +51,7 @@ class HorizontalSection extends StatelessWidget {
                       ClipRRect(
                         borderRadius: BorderRadius.circular(16),
                         child: Image.network(
-                          item.image,
+                          item.imageUrl,
                           height: 130,
                           width: 140,
                           fit: BoxFit.cover,

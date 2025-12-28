@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../api_service.dart';
 import '../../utils/transitions.dart';
-import '../home_screen.dart';
+import '../../api_service.dart';
+import '../../storage_service.dart';
+import 'loading_transition_screen.dart';
+import '../../utils/colors.dart';
 
 class ChoosePodcastScreen extends StatefulWidget {
   final DateTime dob;
@@ -22,38 +24,46 @@ class ChoosePodcastScreen extends StatefulWidget {
 }
 
 class _ChoosePodcastScreenState extends State<ChoosePodcastScreen> {
-  final List<String> podcasts = [
-    "Podkesmas",
-    "Agak Laen",
-    "Deddy Corbuzier",
-    "The Onsu",
+  final List<Map<String, String>> podcasts = [
+    {"n": "Podkesmas", "i": "https://placehold.co/200x200/png?text=Podkesmas"},
+    {"n": "Agak Laen", "i": "https://placehold.co/200x200/png?text=Agak+Laen"},
+    {"n": "Deddy C", "i": "https://placehold.co/200x200/png?text=Deddy"},
+    {"n": "The Onsu", "i": "https://placehold.co/200x200/png?text=The+Onsu"},
   ];
-  final List<String> selectedPodcasts = [];
+  final List<String> selectedP = [];
   bool isLoading = false;
 
-  Future<void> _finishOnboarding() async {
+  void _finish() async {
     setState(() => isLoading = true);
 
-    // Data lengkap untuk dikirim ke backend
-    final data = {
+    final response = await ApiService.updateOnboardingData({
       "full_name": widget.name,
-      "date_of_birth": widget.dob.toIso8601String(),
+      "date_of_birth": widget.dob.toIso8601String().split('T')[0], // YYYY-MM-DD
       "gender": widget.gender,
       "favorite_artists": widget.artists,
-      "favorite_podcasts": selectedPodcasts,
-    };
-
-    final success = await ApiService.updateOnboardingData(data);
+      "favorite_podcasts": selectedP,
+    });
 
     if (mounted) {
-      setState(() => isLoading = false);
-      if (success != null) {
-        Navigator.of(
-          context,
-        ).pushAndRemoveUntil(createRoute(const HomeScreen()), (route) => false);
+      if (response == true) {
+        // PENTING: Tandai onboarding selesai di lokal storage
+        await StorageService.setOnboardingDone();
+
+        setState(() => isLoading = false);
+
+        Navigator.of(context).pushAndRemoveUntil(
+          createRoute(const LoadingTransitionScreen()),
+          (route) => false,
+        );
       } else {
+        setState(() => isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Gagal menyimpan data, coba lagi.")),
+          const SnackBar(
+            content: Text(
+              "Gagal menyimpan data, silakan periksa koneksi Anda.",
+            ),
+            backgroundColor: Colors.redAccent,
+          ),
         );
       }
     }
@@ -62,61 +72,103 @@ class _ChoosePodcastScreenState extends State<ChoosePodcastScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF121212),
+      backgroundColor: QColors.background,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: QColors.background,
         elevation: 0,
-        bottom: onboardingStepProgress(1.0), // Progress 100%
-        title: const Text("Pilih Podcast", style: TextStyle(fontSize: 16)),
+        bottom: onboardingStepProgress(1.0),
+        title: const Text(
+          "Pilih Podcast",
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
       ),
       body: Column(
         children: [
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 20),
+            child: Text(
+              "Pilih podcast yang kamu sukai",
+              style: TextStyle(color: Colors.white70, fontSize: 14),
+            ),
+          ),
           Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(20),
+            child: GridView.builder(
+              padding: const EdgeInsets.all(16),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                childAspectRatio: 0.8,
+                crossAxisSpacing: 10,
+                mainAxisSpacing: 20,
+              ),
               itemCount: podcasts.length,
-              itemBuilder: (context, index) {
-                final p = podcasts[index];
-                final isSelected = selectedPodcasts.contains(p);
-                return CheckboxListTile(
-                  title: Text(p, style: const TextStyle(color: Colors.white)),
-                  value: isSelected,
-                  activeColor: Colors.green,
-                  onChanged: (val) {
-                    setState(() {
-                      val!
-                          ? selectedPodcasts.add(p)
-                          : selectedPodcasts.remove(p);
-                    });
-                  },
+              itemBuilder: (ctx, i) {
+                final name = podcasts[i]['n']!;
+                final isSel = selectedP.contains(name);
+                return GestureDetector(
+                  onTap: () => setState(
+                    () => isSel ? selectedP.remove(name) : selectedP.add(name),
+                  ),
+                  child: Column(
+                    children: [
+                      Stack(
+                        children: [
+                          CircleAvatar(
+                            radius: 46,
+                            backgroundColor: isSel
+                                ? QColors.primaryPurple
+                                : Colors.grey.shade900,
+                            child: CircleAvatar(
+                              radius: 42,
+                              backgroundImage: NetworkImage(podcasts[i]['i']!),
+                            ),
+                          ),
+                          if (isSel)
+                            const Positioned(
+                              right: 0,
+                              bottom: 0,
+                              child: CircleAvatar(
+                                radius: 12,
+                                backgroundColor: QColors.primaryPurple,
+                                child: Icon(
+                                  Icons.check,
+                                  color: Colors.black,
+                                  size: 16,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        name,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: isSel ? QColors.primaryPurple : Colors.white,
+                          fontSize: 12,
+                          fontWeight: isSel
+                              ? FontWeight.bold
+                              : FontWeight.normal,
+                        ),
+                      ),
+                    ],
+                  ),
                 );
               },
             ),
           ),
           Padding(
-            padding: const EdgeInsets.only(bottom: 40),
-            child: ElevatedButton(
-              onPressed: isLoading ? null : _finishOnboarding,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: Colors.black,
-                minimumSize: const Size(200, 50),
-                shape: const StadiumBorder(),
-              ),
-              child: isLoading
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(
-                        color: Colors.black,
-                        strokeWidth: 2,
-                      ),
-                    )
-                  : const Text(
-                      "Mulai Mendengarkan",
-                      style: TextStyle(fontWeight: FontWeight.bold),
+            padding: const EdgeInsets.fromLTRB(24, 0, 24, 50),
+            child: isLoading
+                ? const Center(
+                    child: CircularProgressIndicator(
+                      color: QColors.primaryPurple,
                     ),
-            ),
+                  )
+                : buildNextBtn(
+                    active: selectedP.isNotEmpty,
+                    onTap: _finish,
+                    text: "Mulai Mendengarkan",
+                  ),
           ),
         ],
       ),
