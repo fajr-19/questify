@@ -1,189 +1,135 @@
 import 'package:flutter/material.dart';
 import 'package:rive/rive.dart';
-import 'models/music_item.dart';
-import '../utils/colors.dart';
+import 'package:audioplayers/audioplayers.dart';
+import 'package:youtube_explode_dart/youtube_explode_dart.dart';
+import 'package:frontend/screens/models/music_item.dart';
 
 class MusicPlayerScreen extends StatefulWidget {
-  final MusicItem item; // Di HomeScreen dipanggil pakai 'item: item'
-  const MusicPlayerScreen({super.key, required this.item});
+  final List<MusicItem> playlist;
+  final int initialIndex;
+
+  const MusicPlayerScreen({
+    super.key,
+    required this.playlist,
+    required this.initialIndex,
+  });
 
   @override
   State<MusicPlayerScreen> createState() => _MusicPlayerScreenState();
 }
 
 class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
-  Artboard? _riveArtboard;
-  RiveAnimationController? _controller;
-
+  late AudioPlayer _audioPlayer;
+  final YoutubeExplode _yt = YoutubeExplode();
+  late int currentIndex;
   bool isPlaying = false;
-  String currentAnimation = 'Idle';
+  bool isLoading = false;
 
-  final List<String> animationStyles = ['Idle', 'Flying'];
+  Duration duration = Duration.zero;
+  Duration position = Duration.zero;
 
-  void _onRiveInit(Artboard artboard) {
-    _riveArtboard = artboard;
-    _controller = SimpleAnimation(currentAnimation);
-    _riveArtboard!.addController(_controller!);
+  // Mendefinisikan class dengan prefix 'rive.' secara eksplisit
+  StateMachineController? _riveController;
+  SMIInput<bool>? _isFlying;
+
+  @override
+  void initState() {
+    super.initState();
+    currentIndex = widget.initialIndex;
+    _audioPlayer = AudioPlayer();
+
+    _audioPlayer.onDurationChanged.listen((d) => setState(() => duration = d));
+    _audioPlayer.onPositionChanged.listen((p) => setState(() => position = p));
+    _audioPlayer.onPlayerStateChanged.listen((state) {
+      if (mounted) {
+        setState(() {
+          isPlaying = state == PlayerState.playing;
+          _isFlying?.value = isPlaying;
+        });
+      }
+    });
+
+    _playHybrid();
   }
 
-  void _changeDashAnimation(String animationName) {
-    if (_riveArtboard == null || _controller == null) return;
+  Future<void> _playHybrid() async {
+    final song = widget.playlist[currentIndex];
+    setState(() => isLoading = true);
 
-    _riveArtboard!.removeController(_controller!);
-    _controller = SimpleAnimation(animationName);
-    _riveArtboard!.addController(_controller!);
-
-    setState(() {
-      currentAnimation = animationName;
-    });
+    try {
+      await _audioPlayer.stop();
+      var search = await _yt.search.search(
+        "${song.artist} ${song.title} audio",
+      );
+      if (search.isNotEmpty) {
+        var manifest = await _yt.videos.streamsClient.getManifest(
+          search.first.id,
+        );
+        var url = manifest.audioOnly.withHighestBitrate().url;
+        await _audioPlayer.play(UrlSource(url.toString()));
+      }
+    } catch (e) {
+      debugPrint("Error: $e");
+    } finally {
+      if (mounted) setState(() => isLoading = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: QColors.background,
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 50, left: 20, right: 20),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                IconButton(
-                  icon: const Icon(
-                    Icons.expand_more,
-                    size: 30,
-                    color: Colors.white,
-                  ),
-                  onPressed: () => Navigator.pop(context),
-                ),
-                const Text(
-                  "DASH PLAYER",
-                  style: TextStyle(
-                    letterSpacing: 2,
-                    fontSize: 12,
-                    color: Colors.white,
-                  ),
-                ),
-                const Icon(Icons.favorite_border, color: Colors.white),
-              ],
-            ),
-          ),
-
-          Expanded(
-            flex: 3,
-            child: RiveAnimation.asset(
-              'assets/rive/dash_music.riv',
-              onInit: _onRiveInit,
-              fit: BoxFit.contain,
-              placeHolder: const Center(child: CircularProgressIndicator()),
-            ),
-          ),
-
-          Expanded(
-            flex: 2,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 30),
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(
-                  alpha: 0.4,
-                ), // Perbaikan deprecated
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(40),
-                ),
-              ),
-              child: Column(
-                children: [
-                  Text(
-                    widget.item.title,
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+      backgroundColor: Colors.black,
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SizedBox(
+              height: 300,
+              child: isLoading
+                  ? const CircularProgressIndicator()
+                  : RiveAnimation.asset(
+                      'assets/rive/dash_music.riv',
+                      onInit: (artboard) {
+                        // Mencari controller dengan State Machine di Rive 0.14.0
+                        final controller =
+                            rive.StateMachineController.fromArtboard(
+                              artboard,
+                              'State Machine 1',
+                            );
+                        if (controller != null) {
+                          artboard.addController(controller);
+                          _riveController = controller;
+                          _isFlying = controller.findInput<bool>('isPlay');
+                          _isFlying?.value = isPlaying;
+                        }
+                      },
                     ),
-                  ),
-                  Text(
-                    widget.item.artist,
-                    style: const TextStyle(fontSize: 16, color: Colors.white54),
-                  ),
-                  const SizedBox(height: 30),
-
-                  _buildAnimationStyleChips(),
-                  const SizedBox(height: 30),
-
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(
-                        Icons.skip_previous,
-                        size: 45,
-                        color: Colors.white,
-                      ),
-                      const SizedBox(width: 30),
-                      FloatingActionButton(
-                        backgroundColor: QColors.primaryPurple,
-                        onPressed: () {
-                          setState(() {
-                            isPlaying = !isPlaying;
-                            if (isPlaying) {
-                              _changeDashAnimation('Flying');
-                            } else {
-                              _changeDashAnimation('Idle');
-                            }
-                          });
-                        },
-                        child: Icon(
-                          isPlaying ? Icons.pause : Icons.play_arrow,
-                          size: 40,
-                          color: Colors.black,
-                        ),
-                      ),
-                      const SizedBox(width: 30),
-                      const Icon(
-                        Icons.skip_next,
-                        size: 45,
-                        color: Colors.white,
-                      ),
-                    ],
-                  ),
-                ],
-              ),
             ),
-          ),
-        ],
+            const SizedBox(height: 20),
+            Text(
+              widget.playlist[currentIndex].title,
+              style: const TextStyle(color: Colors.white, fontSize: 18),
+            ),
+            IconButton(
+              iconSize: 64,
+              icon: Icon(
+                isPlaying ? Icons.pause : Icons.play_arrow,
+                color: Colors.white,
+              ),
+              onPressed: () =>
+                  isPlaying ? _audioPlayer.pause() : _audioPlayer.resume(),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildAnimationStyleChips() {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: animationStyles.map((styleName) {
-          bool isSelected = currentAnimation == styleName;
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 6),
-            child: ChoiceChip(
-              label: Text(styleName),
-              selected: isSelected,
-              selectedColor: QColors.primaryPurple,
-              labelStyle: TextStyle(
-                color: isSelected ? Colors.black : Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-              backgroundColor: Colors.white.withValues(
-                alpha: 0.1,
-              ), // Perbaikan deprecated
-              onSelected: (selected) {
-                if (selected) {
-                  _changeDashAnimation(styleName);
-                }
-              },
-            ),
-          );
-        }).toList(),
-      ),
-    );
+  @override
+  void dispose() {
+    _audioPlayer.dispose();
+    _yt.close();
+    _riveController?.dispose();
+    super.dispose();
   }
 }
