@@ -1,11 +1,13 @@
-// D:\ProjectPPL\questify\backend\src\middleware\auth.js
 const jwt = require('jsonwebtoken');
 
 module.exports = (req, res, next) => {
   try {
-    const token = req.headers.authorization.split(' ')[1];
+    const authHeader = req.headers.authorization;
+    if (!authHeader) return res.status(401).json({ message: 'No token provided' });
+    
+    const token = authHeader.split(' ')[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded; // Berisi { id: ... }
+    req.user = decoded; // Mengandung ID user
     next();
   } catch (err) {
     res.status(401).json({ message: 'Authentication failed' });
