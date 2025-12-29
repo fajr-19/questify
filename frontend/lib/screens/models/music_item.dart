@@ -4,7 +4,7 @@ class MusicItem {
   final String artist;
   final String? coverUrl;
   final String? audioUrl;
-  final String? lyrics;
+  final String? youtubeId; // Tambahkan ini
   final String? description;
 
   MusicItem({
@@ -13,19 +13,20 @@ class MusicItem {
     required this.artist,
     this.coverUrl,
     this.audioUrl,
-    this.lyrics,
+    this.youtubeId,
     this.description,
   });
 
   factory MusicItem.fromJson(Map<String, dynamic> json) {
     return MusicItem(
-      id: json['_id'] ?? json['id'] ?? '',
-      title: json['title'] ?? 'Unknown Title',
-      artist: json['artist'] ?? 'Unknown Artist',
-      coverUrl: json['thumbnail'] ?? json['coverUrl'],
-      audioUrl: json['audioUrl'],
-      lyrics: json['lyrics'],
-      description: json['description'],
+      // Mengatasi perbedaan id dari MongoDB (_id) atau iTunes (id)
+      id: json['_id']?.toString() ?? json['id']?.toString() ?? '',
+      title: json['title'] ?? json['trackName'] ?? 'Unknown Title',
+      artist: json['artist'] ?? json['artistName'] ?? 'Unknown Artist',
+      coverUrl: json['thumbnail'] ?? json['coverUrl'] ?? json['artworkUrl100'],
+      audioUrl: json['audioUrl'] ?? json['previewUrl'],
+      youtubeId: json['youtubeId'], // Mapping youtubeId dari backend
+      description: json['description'] ?? json['collectionName'],
     );
   }
 }

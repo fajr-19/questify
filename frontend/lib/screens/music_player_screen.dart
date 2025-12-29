@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:rive/rive.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 import 'package:frontend/screens/models/music_item.dart';
+import 'package:frontend/api_service.dart';
 
 class MusicPlayerScreen extends StatefulWidget {
   final List<MusicItem> playlist;
@@ -21,16 +21,11 @@ class MusicPlayerScreen extends StatefulWidget {
 class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
   late AudioPlayer _audioPlayer;
   final YoutubeExplode _yt = YoutubeExplode();
-
   late int currentIndex;
   bool isPlaying = false;
   bool isLoading = false;
-
   Duration duration = Duration.zero;
   Duration position = Duration.zero;
-
-  StateMachineController? _riveController;
-  SMIInput<bool>? _isFlying;
 
   @override
   void initState() {
@@ -38,28 +33,13 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
     currentIndex = widget.initialIndex;
     _audioPlayer = AudioPlayer();
 
-    // Listener Durasi & Posisi (Audioplayers 6.5.1)
-    _audioPlayer.onDurationChanged.listen((d) {
-      if (mounted) setState(() => duration = d);
-    });
-
-    _audioPlayer.onPositionChanged.listen((p) {
-      if (mounted) setState(() => position = p);
-    });
-
-    // Listener Status Play/Pause
+    _audioPlayer.onDurationChanged.listen((d) => setState(() => duration = d));
+    _audioPlayer.onPositionChanged.listen((p) => setState(() => position = p));
     _audioPlayer.onPlayerStateChanged.listen((state) {
-      if (mounted) {
-        setState(() {
-          isPlaying = state == PlayerState.playing;
-          _isFlying?.value = isPlaying;
-        });
-      }
+      if (mounted) setState(() => isPlaying = state == PlayerState.playing);
     });
 
-    // Otomatis pindah lagu jika selesai
     _audioPlayer.onPlayerComplete.listen((event) => _nextSong());
-
     _playHybrid();
   }
 
@@ -68,29 +48,38 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
     setState(() {
       isLoading = true;
       position = Duration.zero;
-      duration = Duration.zero;
     });
 
     try {
       await _audioPlayer.stop();
+      String? streamUrl;
 
-      // Tips: Mencari dengan format Artist - Title agar lebih akurat
-      var search = await _yt.search.search("${song.artist} ${song.title}");
+      // 1. Cek Cache Backend
+      if (song.youtubeId != null && song.youtubeId!.isNotEmpty) {
+        var manifest = await _yt.videos.streamsClient.getManifest(
+          song.youtubeId,
+        );
+        streamUrl = manifest.audioOnly.withHighestBitrate().url.toString();
+      }
+      // 2. Search YouTube jika tidak ada cache
+      else {
+        var search = await _yt.search.search("${song.artist} ${song.title}");
+        if (search.isNotEmpty) {
+          var video = search.first;
+          var manifest = await _yt.videos.streamsClient.getManifest(video.id);
+          streamUrl = manifest.audioOnly.withHighestBitrate().url.toString();
+          // Simpan ke backend agar next time cepat
+          ApiService.cacheYoutubeId(song.id, video.id.value);
+        }
+      }
 
-      if (search.isNotEmpty) {
-        var video = search.first;
-        var manifest = await _yt.videos.streamsClient.getManifest(video.id);
-
-        // Mengambil bitrate tertinggi untuk kualitas suara jernih
-        var audioStream = manifest.audioOnly.withHighestBitrate();
-
-        await _audioPlayer.play(UrlSource(audioStream.url.toString()));
+      if (streamUrl != null) {
+        await _audioPlayer.play(UrlSource(streamUrl));
+      } else if (song.audioUrl != null) {
+        await _audioPlayer.play(UrlSource(song.audioUrl!));
       }
     } catch (e) {
-      debugPrint("Error playing music: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Gagal memutar lagu: ${song.title}")),
-      );
+      debugPrint("Playback Error: $e");
     } finally {
       if (mounted) setState(() => isLoading = false);
     }
@@ -109,177 +98,89 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
     _playHybrid();
   }
 
-  String _formatDuration(Duration d) {
-    String minutes = d.inMinutes.toString().padLeft(2, '0');
-    String seconds = (d.inSeconds % 60).toString().padLeft(2, '0');
-    return "$minutes:$seconds";
-  }
-
   @override
   void dispose() {
     _audioPlayer.dispose();
     _yt.close();
-    _riveController?.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final song = widget.playlist[currentIndex];
-
     return Scaffold(
-      backgroundColor: const Color(0xFF121212), // Dark mode ala Spotify
-      appBar: AppBar(
-        title: const Text(
-          "NOW PLAYING",
-          style: TextStyle(fontSize: 14, letterSpacing: 2),
-        ),
-        backgroundColor: Colors.transparent,
-      ),
+      backgroundColor: Colors.black,
+      appBar: AppBar(backgroundColor: Colors.transparent, elevation: 0),
       body: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const SizedBox(height: 20),
-
-          // Bagian Animasi Rive
-          Expanded(
-            flex: 4,
-            child: Center(
-              child: SizedBox(
-                width: 300,
-                child: RiveAnimation.asset(
-                  'assets/rive/dash_music.riv',
-                  fit: BoxFit.contain,
-                  onInit: (artboard) {
-                    final controller = StateMachineController.fromArtboard(
-                      artboard,
-                      'State Machine 1',
-                    );
-                    if (controller != null) {
-                      artboard.addController(controller);
-                      _riveController = controller;
-                      _isFlying = controller.findInput<bool>('isPlay');
-                      _isFlying?.value = isPlaying;
-                    }
-                  },
-                ),
+          // Cover Art
+          Container(
+            width: 280,
+            height: 280,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              image: DecorationImage(
+                image: NetworkImage(song.coverUrl ?? ""),
+                fit: BoxFit.cover,
               ),
             ),
           ),
-
-          // Bagian Info Lagu & Slider
-          Expanded(
-            flex: 3,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 25),
-              child: Column(
-                children: [
-                  Text(
-                    song.title,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  Text(
-                    song.artist,
-                    style: const TextStyle(fontSize: 18, color: Colors.white70),
-                  ),
-
-                  const SizedBox(height: 30),
-
-                  // Slider Durasi
-                  if (isLoading)
-                    const LinearProgressIndicator(color: Colors.purpleAccent)
-                  else
-                    Column(
-                      children: [
-                        Slider(
-                          min: 0,
-                          max: duration.inSeconds.toDouble() > 0
-                              ? duration.inSeconds.toDouble()
-                              : 1.0,
-                          value: position.inSeconds.toDouble().clamp(
-                            0,
-                            duration.inSeconds.toDouble() > 0
-                                ? duration.inSeconds.toDouble()
-                                : 1.0,
-                          ),
-                          activeColor: Colors.purpleAccent,
-                          inactiveColor: Colors.white10,
-                          onChanged: (value) async {
-                            await _audioPlayer.seek(
-                              Duration(seconds: value.toInt()),
-                            );
-                          },
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 15),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                _formatDuration(position),
-                                style: const TextStyle(color: Colors.white54),
-                              ),
-                              Text(
-                                _formatDuration(duration),
-                                style: const TextStyle(color: Colors.white54),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-
-                  const SizedBox(height: 20),
-
-                  // Kontrol Playback
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      IconButton(
-                        icon: const Icon(
-                          Icons.skip_previous,
-                          size: 45,
-                          color: Colors.white,
-                        ),
-                        onPressed: _prevSong,
-                      ),
-                      CircleAvatar(
-                        radius: 35,
-                        backgroundColor: Colors.white,
-                        child: IconButton(
-                          icon: Icon(
-                            isPlaying ? Icons.pause : Icons.play_arrow,
-                            size: 40,
-                            color: Colors.black,
-                          ),
-                          onPressed: () {
-                            if (isPlaying) {
-                              _audioPlayer.pause();
-                            } else {
-                              _audioPlayer.resume();
-                            }
-                          },
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(
-                          Icons.skip_next,
-                          size: 45,
-                          color: Colors.white,
-                        ),
-                        onPressed: _nextSong,
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+          const SizedBox(height: 40),
+          Text(
+            song.title,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
             ),
+            textAlign: TextAlign.center,
+          ),
+          Text(
+            song.artist,
+            style: const TextStyle(color: Colors.white70, fontSize: 18),
+          ),
+          const SizedBox(height: 30),
+          if (isLoading)
+            const CircularProgressIndicator(color: Colors.purpleAccent),
+          Slider(
+            value: position.inSeconds.toDouble(),
+            max: duration.inSeconds.toDouble() > 0
+                ? duration.inSeconds.toDouble()
+                : 1.0,
+            onChanged: (v) => _audioPlayer.seek(Duration(seconds: v.toInt())),
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              IconButton(
+                icon: const Icon(
+                  Icons.skip_previous,
+                  size: 45,
+                  color: Colors.white,
+                ),
+                onPressed: _prevSong,
+              ),
+              IconButton(
+                icon: Icon(
+                  isPlaying
+                      ? Icons.pause_circle_filled
+                      : Icons.play_circle_filled,
+                  size: 70,
+                  color: Colors.white,
+                ),
+                onPressed: () =>
+                    isPlaying ? _audioPlayer.pause() : _audioPlayer.resume(),
+              ),
+              IconButton(
+                icon: const Icon(
+                  Icons.skip_next,
+                  size: 45,
+                  color: Colors.white,
+                ),
+                onPressed: _nextSong,
+              ),
+            ],
           ),
         ],
       ),
