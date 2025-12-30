@@ -5,9 +5,10 @@ const musicSchema = new mongoose.Schema({
   artist: { type: String, default: "Unknown Artist" }, 
   thumbnail: { type: String, default: "https://via.placeholder.com/500" }, 
   audioUrl: { type: String, required: true }, 
-  lyrics: { type: Array, default: [] }, // Menggunakan array fleksibel
+  lyrics: { type: Array, default: [] }, 
   type: { type: String, enum: ['music', 'podcast', 'video'], default: 'music' },
-  description: { type: String, default: "" }, 
+  aboutArtist: { type: String, default: "" }, 
+  credits: { type: String, default: "" },
   genre: [String],
   uploadedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
 }, { timestamps: true });
