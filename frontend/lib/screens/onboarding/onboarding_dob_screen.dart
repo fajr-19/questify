@@ -29,7 +29,7 @@ class _OnboardingDobScreenState extends State<OnboardingDobScreen> {
               surface: QColors.surface,
               onSurface: Colors.white, // Teks tanggal
             ),
-            dialogBackgroundColor: QColors.background,
+            dialogTheme: DialogThemeData(backgroundColor: QColors.background),
           ),
           child: child!,
         );

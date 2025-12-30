@@ -6,7 +6,7 @@ import 'storage_service.dart';
 import 'screens/models/music_item.dart';
 
 class ApiService {
-  static const baseUrl = 'https://questify-backend.up.railway.app';
+  static const baseUrl = 'https://comparative-rheta-questifyapp-08414160.koyeb.app';
 
   static final googleSignIn = GoogleSignIn(
     scopes: ['email'],

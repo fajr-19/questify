@@ -8,6 +8,7 @@ import 'widgets/hero_recommendation.dart';
 import 'widgets/horizontal_section.dart';
 import 'widgets/profile_side_panel.dart';
 import 'music_player_screen.dart';
+import 'create_menu_screen.dart'; // JANGAN LUPA IMPORT INI
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -101,23 +102,78 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   void _playMusic(MusicItem item) {
     ApiService.addXP(10);
-
-    // Ambil index lagu yang diklik dari daftar rekomendasi
     int index = mlRecommendations.indexOf(item);
-
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => MusicPlayerScreen(
-          playlist: mlRecommendations, // Kirim seluruh list
-          initialIndex: index, // Kirim index yang dipilih
-        ),
+        builder: (context) =>
+            MusicPlayerScreen(playlist: mlRecommendations, initialIndex: index),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    // --- SETUP NAV BAR & SCAFFOLD ---
+    return Scaffold(
+      backgroundColor: QColors.background, // Hitam/Gelap
+      // BODY: Switch tampilan berdasarkan navIndex
+      body: SafeArea(
+        top: false, // Set false agar gambar CreateScreen bisa full ke atas
+        child: _buildBodyContent(),
+      ),
+
+      // BOTTOM NAVIGATION (Desain Gambar 1)
+      bottomNavigationBar: Theme(
+        data: Theme.of(context).copyWith(
+          canvasColor: Colors.black, // Background Navbar Hitam
+        ),
+        child: BottomNavigationBar(
+          currentIndex: navIndex,
+          onTap: (i) => setState(() => navIndex = i),
+          selectedItemColor: Colors.white, // Icon Aktif Putih
+          unselectedItemColor: Colors.grey, // Icon Pasif Abu
+          backgroundColor: Colors.black, // Background Hitam Pekat
+          type: BottomNavigationBarType.fixed, // Agar icon tidak geser
+          showUnselectedLabels: true,
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home_filled),
+              label: 'Home',
+            ),
+            BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.add_box_outlined),
+              label: 'Create',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.library_music),
+              label: 'Library',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.workspace_premium),
+              label: 'Premium',
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Helper untuk memilih konten Body
+  Widget _buildBodyContent() {
+    // Jika Index 2 (Create), tampilkan screen baru
+    if (navIndex == 2) {
+      return const CreateMenuScreen();
+    }
+
+    // Jika Index 0 (Home), tampilkan Home yang lama
+    // (Bisa ditambahkan kondisi lain untuk Search/Library jika sudah ada)
+    return _buildHomeView();
+  }
+
+  // --- WIDGET HOME LAMA (Dipindahkan ke sini agar rapi) ---
+  Widget _buildHomeView() {
     final user = FirebaseAuth.instance.currentUser;
     final String displayName =
         userProfile['name'] ?? user?.displayName ?? "User";
@@ -128,157 +184,125 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
     double screenWidth = MediaQuery.of(context).size.width;
 
-    return Scaffold(
-      backgroundColor: QColors.background,
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: navIndex,
-        onTap: (i) => setState(() => navIndex = i),
-        selectedItemColor: QColors.primaryPurple,
-        unselectedItemColor: Colors.grey,
-        backgroundColor: Colors.black,
-        type: BottomNavigationBarType.fixed,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home_filled), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.add_box_outlined),
-            label: 'Create',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.library_music),
-            label: 'Library',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.workspace_premium),
-            label: 'Premium',
-          ),
-        ],
-      ),
-      body: SafeArea(
-        child: loading
-            ? const Center(
-                child: CircularProgressIndicator(color: QColors.primaryPurple),
-              )
-            : RefreshIndicator(
-                onRefresh: _loadHomeData,
-                child: ListView(
-                  padding: const EdgeInsets.symmetric(vertical: 20),
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Column(
+    if (loading) {
+      return const Center(
+        child: CircularProgressIndicator(color: QColors.primaryPurple),
+      );
+    }
+
+    // Bungkus dengan SafeArea khusus untuk Home agar tidak tertutup status bar
+    return SafeArea(
+      child: RefreshIndicator(
+        onRefresh: _loadHomeData,
+        child: ListView(
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // HEADER PROFILE
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    "Selamat Pagi,",
-                                    style: TextStyle(
-                                      color: QColors.textSub,
-                                      fontSize: 16,
-                                    ),
-                                  ),
-                                  AnimatedBuilder(
-                                    animation: _glowAnimation,
-                                    builder: (context, child) {
-                                      return ShaderMask(
-                                        shaderCallback: (bounds) =>
-                                            const LinearGradient(
-                                              colors: [
-                                                Colors.white,
-                                                QColors.primaryPurple,
-                                              ],
-                                            ).createShader(bounds),
-                                        child: Text(
-                                          displayName,
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize: screenWidth * 0.08,
-                                            fontWeight: FontWeight.w900,
-                                            shadows: [
-                                              Shadow(
-                                                blurRadius:
-                                                    _glowAnimation.value,
-                                                color: QColors.primaryPurple
-                                                    .withValues(
-                                                      alpha: 0.8,
-                                                    ), // Perbaikan: withValues
-                                              ),
-                                            ],
-                                          ),
+                          const Text(
+                            "Selamat Pagi,",
+                            style: TextStyle(
+                              color: QColors.textSub,
+                              fontSize: 16,
+                            ),
+                          ),
+                          AnimatedBuilder(
+                            animation: _glowAnimation,
+                            builder: (context, child) {
+                              return ShaderMask(
+                                shaderCallback: (bounds) =>
+                                    const LinearGradient(
+                                      colors: [
+                                        Colors.white,
+                                        QColors.primaryPurple,
+                                      ],
+                                    ).createShader(bounds),
+                                child: Text(
+                                  displayName,
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: screenWidth * 0.08,
+                                    fontWeight: FontWeight.w900,
+                                    shadows: [
+                                      Shadow(
+                                        blurRadius: _glowAnimation.value,
+                                        color: QColors.primaryPurple.withValues(
+                                          alpha: 0.8,
                                         ),
-                                      );
-                                    },
-                                  ),
-                                ],
-                              ),
-                              GestureDetector(
-                                onTap: () =>
-                                    _openProfilePanel(displayName, photoUrl),
-                                child: Container(
-                                  padding: const EdgeInsets.all(2.5),
-                                  decoration: const BoxDecoration(
-                                    color: QColors.primaryPurple,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: CircleAvatar(
-                                    radius: 28,
-                                    backgroundImage: NetworkImage(photoUrl),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                              ),
-                            ],
+                              );
+                            },
                           ),
-                          const SizedBox(height: 20),
-                          _buildMissionBanner(),
                         ],
                       ),
-                    ),
-                    const SizedBox(height: 30),
-
-                    Padding(
-                      padding: const EdgeInsets.only(left: 16),
-                      child: FilterChipsWidget(
-                        onChanged: (val) {
-                          // Filter logic
-                        },
+                      GestureDetector(
+                        onTap: () => _openProfilePanel(displayName, photoUrl),
+                        child: Container(
+                          padding: const EdgeInsets.all(2.5),
+                          decoration: const BoxDecoration(
+                            color: QColors.primaryPurple,
+                            shape: BoxShape.circle,
+                          ),
+                          child: CircleAvatar(
+                            radius: 28,
+                            backgroundImage: NetworkImage(photoUrl),
+                          ),
+                        ),
                       ),
-                    ),
-
-                    const SizedBox(height: 25),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16),
-                      child: HeroRecommendation(),
-                    ),
-                    const SizedBox(height: 35),
-
-                    _buildSectionHeader("Hanya Untukmu"),
-                    const SizedBox(height: 12),
-                    if (mlRecommendations.isNotEmpty)
-                      HorizontalSection(
-                        title: "",
-                        items: mlRecommendations,
-                        onTap: (item) => _playMusic(item),
-                      ),
-
-                    const SizedBox(height: 20),
-
-                    if (popularArtists.isNotEmpty)
-                      HorizontalSection(
-                        title: "Artis Populer",
-                        items: popularArtists,
-                        onTap: (item) {
-                          // Detail artis logic
-                        },
-                      ),
-                    const SizedBox(height: 50),
-                  ],
-                ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  _buildMissionBanner(),
+                ],
               ),
+            ),
+            const SizedBox(height: 30),
+
+            Padding(
+              padding: const EdgeInsets.only(left: 16),
+              child: FilterChipsWidget(onChanged: (val) {}),
+            ),
+
+            const SizedBox(height: 25),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              child: HeroRecommendation(),
+            ),
+            const SizedBox(height: 35),
+
+            _buildSectionHeader("Hanya Untukmu"),
+            const SizedBox(height: 12),
+            if (mlRecommendations.isNotEmpty)
+              HorizontalSection(
+                title: "",
+                items: mlRecommendations,
+                onTap: (item) => _playMusic(item),
+              ),
+
+            const SizedBox(height: 20),
+
+            if (popularArtists.isNotEmpty)
+              HorizontalSection(
+                title: "Artis Populer",
+                items: popularArtists,
+                onTap: (item) {},
+              ),
+            const SizedBox(height: 50),
+          ],
+        ),
       ),
     );
   }
@@ -306,9 +330,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: QColors.primaryPurple.withValues(
-              alpha: 0.4,
-            ), // Perbaikan: withValues
+            color: QColors.primaryPurple.withValues(alpha: 0.4),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),

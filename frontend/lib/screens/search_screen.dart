@@ -16,7 +16,6 @@ class _SearchScreenState extends State<SearchScreen> {
   List<MusicItem> _results = [];
   bool _isSearching = false;
 
-  // Fungsi untuk mencari lagu asli dari YouTube
   Future<void> _searchMusic(String query) async {
     if (query.isEmpty) return;
 
@@ -25,19 +24,17 @@ class _SearchScreenState extends State<SearchScreen> {
     });
 
     try {
-      // Mencari video berdasarkan query
       var searchList = await _yt.search.search(query);
 
       setState(() {
         _results = searchList.map((video) {
+          // FIX: Tambahkan parameter 'type' dan hapus 'description'
           return MusicItem(
             id: video.id.value,
             title: video.title,
             artist: video.author,
-            coverUrl: video
-                .thumbnails
-                .mediumResUrl, // Mengambil thumbnail asli YouTube
-            description: video.description,
+            coverUrl: video.thumbnails.mediumResUrl,
+            type: 'music', // Default untuk hasil YouTube adalah music
           );
         }).toList();
       });
@@ -61,7 +58,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
   @override
   void dispose() {
-    _yt.close(); // Penting untuk menutup client agar tidak memory leak
+    _yt.close();
     _controller.dispose();
     super.dispose();
   }
@@ -132,7 +129,6 @@ class _SearchScreenState extends State<SearchScreen> {
                     style: const TextStyle(color: Colors.white54),
                   ),
                   onTap: () {
-                    // Kirim hasil pencarian sebagai playlist agar bisa skip ke lagu berikutnya
                     Navigator.push(
                       context,
                       MaterialPageRoute(
