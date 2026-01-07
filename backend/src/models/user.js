@@ -5,10 +5,13 @@ const userSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true },
   avatar: String,
+  
+  // Role Admin/User (TAMBAHAN PENTING)
+  role: { type: String, enum: ['user', 'admin'], default: 'user' },
 
   // Data Onboarding
   dob: Date,
-  gender: { type: String, default: null }, // Enum dihapus agar lebih fleksibel
+  gender: { type: String, default: null }, 
   favoriteArtists: { type: [String], default: [] },
   favoritePodcasts: { type: [String], default: [] },
   onboardingCompleted: { type: Boolean, default: false },
@@ -32,14 +35,5 @@ const userSchema = new mongoose.Schema({
     expiryDate: Date
   }
 }, { timestamps: true });
-
-// Middleware Level Up
-userSchema.pre('save', async function() {
-  const xpNeededPerLevel = 100;
-  const calculatedLevel = Math.floor(this.xp / xpNeededPerLevel) + 1;
-  if (calculatedLevel > this.level) {
-    this.level = calculatedLevel;
-  }
-});
 
 module.exports = mongoose.model('User', userSchema);
